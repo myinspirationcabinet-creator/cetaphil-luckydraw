@@ -33,8 +33,9 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.page { display: none; width: 100%; min-height: 100vh; }
-.page.active { display: block; }
+.page { display: none !important; width: 100%; min-height: 100vh; }
+.page.active { display: flex !important; }
+  #page-admin.page.active { display: block !important; }
 
 /* ── 메인 ── */
 #page-main {
