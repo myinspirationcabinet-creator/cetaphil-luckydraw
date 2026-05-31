@@ -33,7 +33,7 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.page { display: none; width: 100%; }
+.page { display: none; width: 100%; min-height: 100vh; }
 .page.active { display: block; }
 
 /* ── 메인 ── */
@@ -133,7 +133,7 @@ html, body {
 }
 
 /* ── 관리자 ── */
-#page-admin { background: #f0f5fb; min-height: 100vh; padding: 22px 18px 40px; }
+#page-admin { background: #f0f5fb; min-height: 100vh; padding: 22px 18px 40px; position: relative; z-index: 50; }
 .adm-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .adm-brand { display: flex; align-items: center; gap: 10px; }
 .adm-logo { background: var(--teal); border-radius: 16px; padding: 5px 16px; }
