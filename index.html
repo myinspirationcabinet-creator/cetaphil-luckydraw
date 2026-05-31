@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>세타필 럭키드로우</title>
+<style>
+/* =============================================
+   폰트 — fonts/ 폴더의 파일 우선, 없으면 웹 폴백
+============================================= */
+@font-face {
+  font-family: 'Paperlogy';
+  src: url('fonts/Paperlogy-8Bold.woff2') format('woff2'),
+       url('fonts/Paperlogy-8Bold.woff')  format('woff'),
+       url('fonts/Paperlogy-8Bold.ttf')   format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NotoSansKR';
+  src: url('fonts/NotoSansKR-Bold.woff2') format('woff2'),
+       url('fonts/NotoSansKR-Bold.ttf')   format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NotoSansKR';
+  src: url('fonts/NotoSansKR-Regular.woff2') format('woff2'),
+       url('fonts/NotoSansKR-Regular.ttf')   format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+/* 인터넷 있을 때 폴백 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-title: 'Paperlogy', 'NotoSansKR', 'Noto Sans KR', sans-serif;
+  --font-body:  'NotoSansKR', 'Noto Sans KR', sans-serif;
+  --blue-dark:  #1a3a6e;
+  --blue-mid:   #1a5db8;
+  --blue-light: #5cc8e8;
+  --teal:       #3db89b;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  font-family: var(--font-body);
+  background: var(--blue-light);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.page { display: none; width: 100%; }
+.page.active { display: block; }
+
+/* ── 메인 ── */
+#page-main {
+  width: 100%; min-height: 100vh;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--blue-light);
+}
+.bg-img {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
+}
+
+.scratch-box-wrapper {
+  position: relative; z-index: 2;
+  width: 72%; max-width: 480px;
+}
+@media (orientation: landscape) {
+  .scratch-box-wrapper { width: 48%; max-width: 540px; margin-top: 4vh; }
+}
+@media (min-width: 768px) and (orientation: portrait) {
+  .scratch-box-wrapper { width: 58%; max-width: 520px; }
+}
+@media (min-width: 1024px) {
+  .scratch-box-wrapper { width: 42%; max-width: 560px; }
+}
+
+.scratch-container {
+  position: relative; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,60,120,0.25);
+  cursor: crosshair; user-select: none; touch-action: none;
+  -webkit-user-select: none;
+}
+
+.prize-reveal-layer {
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: #fff; z-index: 0; padding: 16px; gap: 10px;
+}
+.prize-reveal-img {
+  width: 100%; max-height: 130px; object-fit: contain; border-radius: 8px;
+}
+.prize-reveal-img[src=""], .prize-reveal-img:not([src]) { display: none; }
+.prize-img-placeholder {
+  width: 100%; height: 80px;
+  border: 2px dashed #c8dcea; border-radius: 8px;
+  display: none; align-items: center; justify-content: center;
+  font-size: 12px; color: #aab8c8; text-align: center; line-height: 1.6;
+}
+.prize-reveal-name {
+  font-family: var(--font-title);
+  font-size: clamp(15px, 3vw, 20px);
+  color: #111; text-align: center; line-height: 1.3; font-weight: 700;
+}
+
+#scratch-canvas {
+  position: relative; z-index: 1;
+  display: block; width: 100%; height: auto; border-radius: 16px;
+}
+
+.retry-btn-wrap { text-align: center; margin-top: 14px; display: none; }
+.retry-btn {
+  font-family: var(--font-title);
+  background: var(--blue-mid); color: #fff; border: none;
+  padding: clamp(10px,2vw,13px) clamp(28px,5vw,40px);
+  border-radius: 32px; font-size: clamp(14px,2.5vw,17px);
+  font-weight: 700; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(26,93,184,0.3);
+  transition: background .2s, transform .1s;
+}
+.retry-btn:active { transform: scale(0.97); }
+
+#sold-out-overlay {
+  display: none; position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(180,230,245,0.94);
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px; z-index: 10; border-radius: 16px;
+}
+#sold-out-overlay.show { display: flex; }
+.sold-out-icon { font-size: clamp(36px,6vw,52px); }
+.sold-out-text {
+  font-family: var(--font-title);
+  font-size: clamp(16px,3vw,22px); color: var(--blue-dark);
+  text-align: center; font-weight: 700;
+}
+.sold-out-sub { font-size: clamp(11px,1.8vw,14px); color: #5580a0; text-align: center; }
+
+.admin-trigger {
+  position: fixed; bottom: 10px; right: 12px;
+  background: none; border: none; color: rgba(255,255,255,0.4);
+  font-size: 11px; cursor: pointer; text-decoration: underline; z-index: 100;
+}
+
+/* ── 관리자 ── */
+#page-admin { background: #f0f5fb; min-height: 100vh; padding: 22px 18px 40px; }
+.adm-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.adm-brand { display: flex; align-items: center; gap: 10px; }
+.adm-logo { background: var(--teal); border-radius: 16px; padding: 5px 16px; }
+.adm-logo span { font-family: var(--font-title); color: #fff; font-size: 13px; font-style: italic; }
+.adm-title { font-family: var(--font-title); font-size: 17px; color: #0d3f6e; margin-top: 4px; font-weight: 700; }
+.adm-sub { font-size: 11px; color: #7090b0; margin-top: 2px; }
+.btn-back {
+  background: #fff; border: 2px solid #222; color: #111;
+  padding: 9px 20px; border-radius: 20px;
+  font-size: 14px; font-weight: 900; cursor: pointer; font-family: var(--font-body);
+}
+.btn-back:hover { background: #f0f0f0; }
+
+.adm-section { background: #fff; border-radius: 14px; border: .5px solid #c8dcea; padding: 18px; margin-bottom: 14px; }
+.adm-section-title {
+  font-size: 13px; font-weight: 700; color: #1a5580;
+  margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #eef4fb;
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.stats-grid { display: flex; gap: 10px; }
+.stat-card { flex: 1; border-radius: 10px; padding: 12px 8px; text-align: center; }
+.stat-card.all { background: #e8f6ff; } .stat-card.c1 { background: #fff7e6; } .stat-card.c2 { background: #e8faf2; }
+.stat-val { font-family: var(--font-title); font-size: 26px; line-height: 1; font-weight: 700; }
+.stat-card.all .stat-val { color: #0d3f6e; } .stat-card.c1 .stat-val { color: #b06000; } .stat-card.c2 .stat-val { color: #0f6e56; }
+.stat-label { font-size: 10px; color: #7090a8; margin-top: 4px; }
+
+.stock-grid { display: flex; gap: 10px; }
+.stock-card { flex: 1; border-radius: 10px; padding: 12px 10px; border: 1.5px solid; }
+.stock-card.s1 { background: #fffdf0; border-color: #f5c842; } .stock-card.s2 { background: #f0fdf8; border-color: #3db89b; }
+.stock-card.s1.empty, .stock-card.s2.empty { background: #fff5f5; border-color: #e24b4a; opacity: .7; }
+.stock-header { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.stock-icon { font-size: 18px; } .stock-name { font-size: 12px; font-weight: 700; color: #444; flex: 1; }
+.stock-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 8px; }
+.stock-badge.active { background: #e8faf2; color: #0f6e56; } .stock-badge.empty { background: #fff0f0; color: #e24b4a; }
+.stock-nums { display: flex; align-items: baseline; gap: 4px; }
+.stock-remain { font-family: var(--font-title); font-size: 24px; color: #0d3f6e; font-weight: 700; }
+.stock-card.s1.empty .stock-remain, .stock-card.s2.empty .stock-remain { color: #e24b4a; }
+.stock-total { font-size: 11px; color: #aab8c8; }
+.stock-bar-wrap { height: 6px; background: #e8eef4; border-radius: 6px; overflow: hidden; margin-top: 6px; }
+.stock-bar { height: 100%; border-radius: 6px; transition: width .4s; }
+.stock-card.s1 .stock-bar { background: #f5a623; } .stock-card.s2 .stock-bar { background: #1d9e75; }
+.stock-card.s1.empty .stock-bar, .stock-card.s2.empty .stock-bar { background: #e24b4a; }
+
+.prize-setting-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; border-bottom: .5px solid #eef4fb; }
+.prize-setting-row:last-child { border-bottom: none; padding-bottom: 0; }
+.prize-badge { width: 56px; height: 56px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; gap: 2px; }
+.prize-badge.b1 { background: #fff3db; border: 1.5px solid #f5c842; } .prize-badge.b2 { background: #e6f9f1; border: 1.5px solid #3db89b; }
+.prize-badge-icon { font-size: 22px; } .prize-badge-text { font-size: 9px; font-weight: 700; text-align: center; line-height: 1.2; }
+.prize-badge.b1 .prize-badge-text { color: #a07000; } .prize-badge.b2 .prize-badge-text { color: #0a6e4e; }
+.ps-info { flex: 1; }
+.ps-name-input { width: 100%; font-size: 13px; font-weight: 700; color: #0d3f6e; border: 1.5px solid #d0e4f0; border-radius: 8px; padding: 6px 8px; outline: none; background: #f8fcff; font-family: var(--font-body); }
+.ps-name-input:focus { border-color: #1e9fd4; }
+.ps-numbers { display: flex; gap: 10px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
+.ps-num-group { display: flex; align-items: center; gap: 4px; }
+.ps-num-group label { font-size: 10px; color: #7090a8; white-space: nowrap; }
+input.ps-num-input { width: 62px; padding: 5px 6px; border: 1.5px solid #d0e4f0; border-radius: 7px; font-size: 13px; font-weight: 700; color: #0d3f6e; text-align: center; outline: none; font-family: var(--font-body); }
+input.ps-num-input:focus { border-color: #1e9fd4; }
+.ps-unit { font-size: 11px; color: #7090a8; }
+.ps-img-input-wrap { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.ps-img-input-wrap label { font-size: 10px; color: #7090a8; white-space: nowrap; }
+.ps-img-input { flex: 1; font-size: 11px; color: #0d3f6e; border: 1.5px solid #d0e4f0; border-radius: 7px; padding: 5px 7px; outline: none; background: #f8fcff; font-family: var(--font-body); }
+.ps-img-input:focus { border-color: #1e9fd4; }
+.btn-reset-stock { margin-top: 8px; background: #f5f5f5; border: 2px solid #444; color: #111; font-size: 12px; font-weight: 900; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-family: var(--font-body); }
+.btn-reset-stock:hover { background: #e8e8e8; }
+
+.prob-bar-section { margin-top: 14px; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.bar-name { font-size: 11px; color: #7090a8; width: 90px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { flex: 1; height: 10px; background: #e2eff8; border-radius: 10px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 10px; transition: width .35s; }
+.bar-fill.c1 { background: linear-gradient(90deg,#f5a623,#f7c96e); } .bar-fill.c2 { background: linear-gradient(90deg,#1d9e75,#4ecb9e); }
+.bar-pct { font-size: 11px; font-weight: 700; color: #1a5580; width: 38px; text-align: right; flex-shrink: 0; }
+.prob-total-row { display: flex; justify-content: space-between; font-size: 12px; color: #7090a8; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #d8eaf4; }
+.prob-total-val { font-weight: 900; font-size: 14px; }
+.prob-total-val.over { color: #e24b4a; } .prob-total-val.ok { color: #1d9e75; } .prob-total-val.under { color: #f09a00; }
+.prob-warn { font-size: 11px; margin-top: 6px; padding: 6px 10px; border-radius: 6px; display: none; }
+.prob-warn.show { display: block; }
+.prob-warn.over { background: #fff0f0; color: #c0392b; } .prob-warn.under { background: #fffbe6; color: #a06000; } .prob-warn.ok { background: #edfdf5; color: #0f6e56; }
+
+.history-list { max-height: 220px; overflow-y: auto; margin-top: 2px; }
+.history-item { display: flex; align-items: center; padding: 7px 4px; border-bottom: .5px solid #f0f6fb; font-size: 12px; }
+.history-item:last-child { border-bottom: none; }
+.history-num { color: #b0c0d0; width: 28px; flex-shrink: 0; font-size: 11px; }
+.history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-right: 6px; }
+.history-dot.p1 { background: #f5a623; } .history-dot.p2 { background: #1d9e75; }
+.history-prize { flex: 1; font-weight: 700; }
+.history-prize.p1 { color: #a06000; } .history-prize.p2 { color: #0f6e56; }
+.history-time { color: #b0c0d0; font-size: 10px; flex-shrink: 0; }
+.history-empty { font-size: 12px; color: #b0c0d0; text-align: center; padding: 18px 0; }
+
+.btn-save { width: 100%; background: #111; color: #fff; border: none; padding: 14px; border-radius: 28px; font-family: var(--font-title); font-size: 17px; font-weight: 700; cursor: pointer; letter-spacing: .04em; transition: background .2s; }
+.btn-save:hover { background: #333; }
+.save-feedback { text-align: center; font-size: 12px; font-weight: 700; margin-top: 8px; min-height: 18px; }
+.save-feedback.ok { color: #1d9e75; } .save-feedback.err { color: #e24b4a; }
+.btn-reset-all { width: 100%; margin-top: 10px; background: #fff; color: #111; border: 2px solid #555; padding: 12px; border-radius: 28px; font-family: var(--font-body); font-size: 14px; font-weight: 900; cursor: pointer; transition: background .2s; }
+.btn-reset-all:hover { background: #f5f5f5; }
+
+.confetti-container { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 9999; display: none; overflow: hidden; }
+.cp { position: absolute; border-radius: 2px; animation: cffall linear forwards; }
+@keyframes cffall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+</style>
+</head>
+<body>
+
+<div id="page-main" class="page active">
+  <img class="bg-img" src="images/럭키드로우_스크래치_배경.png" alt="" onerror="this.style.opacity=0;" />
+  <div class="scratch-box-wrapper">
+    <div class="scratch-container" id="scratch-container">
+      <div class="prize-reveal-layer">
+        <img id="prize-img" src="" alt="" class="prize-reveal-img"
+          onerror="this.style.display='none'; document.getElementById('prize-placeholder').style.display='flex';" />
+        <div class="prize-img-placeholder" id="prize-placeholder">
+          이미지 준비 중<br><span style="font-size:10px;color:#c8dcea;">관리자 페이지에서 파일명을 지정해 주세요</span>
+        </div>
+        <div class="prize-reveal-name" id="prize-name-display"></div>
+      </div>
+      <canvas id="scratch-canvas"></canvas>
+      <div id="sold-out-overlay">
+        <div class="sold-out-icon">🎊</div>
+        <div class="sold-out-text">모든 경품이 소진되었습니다!</div>
+        <div class="sold-out-sub">행사에 참여해 주셔서 감사합니다.</div>
+      </div>
+    </div>
+    <div class="retry-btn-wrap" id="retry-wrap">
+      <button class="retry-btn" onclick="resetToMain()">처음으로 돌아가기</button>
+    </div>
+  </div>
+  <button class="admin-trigger" onclick="showPage('admin')">관리자</button>
+</div>
+
+<div id="page-admin" class="page">
+  <div class="adm-topbar">
+    <div class="adm-brand">
+      <div class="adm-logo"><span>Cetaphil.</span></div>
+      <div><div class="adm-title">관리자 페이지</div><div class="adm-sub">럭키드로우 설정 · 통계</div></div>
+    </div>
+    <button class="btn-back" onclick="showPage('main')">← 메인으로</button>
+  </div>
+
+  <div class="adm-section">
+    <div class="adm-section-title">📊 참여 통계</div>
+    <div class="stats-grid">
+      <div class="stat-card all"><div class="stat-val" id="s-total">0</div><div class="stat-label">총 참여수</div></div>
+      <div class="stat-card c1"><div class="stat-val" id="s-p1">0</div><div class="stat-label">영화 티켓 당첨</div></div>
+      <div class="stat-card c2"><div class="stat-val" id="s-p2">0</div><div class="stat-label">SA 미니어처 당첨</div></div>
+    </div>
+  </div>
+
+  <div class="adm-section">
+    <div class="adm-section-title">📦 실시간 재고 현황</div>
+    <div class="stock-grid">
+      <div class="stock-card s1" id="stock-card-1">
+        <div class="stock-header"><span class="stock-icon">🎟️</span><span class="stock-name" id="stock-name-1">영화 티켓</span><span class="stock-badge active" id="stock-badge-1">운영중</span></div>
+        <div class="stock-nums"><span class="stock-remain" id="stock-remain-1">20</span><span class="stock-total" id="stock-total-1">/ 20매</span></div>
+        <div class="stock-bar-wrap"><div class="stock-bar" id="stock-bar-1" style="width:100%;"></div></div>
+      </div>
+      <div class="stock-card s2" id="stock-card-2">
+        <div class="stock-header"><span class="stock-icon">🧴</span><span class="stock-name" id="stock-name-2">SA 미니어처</span><span class="stock-badge active" id="stock-badge-2">운영중</span></div>
+        <div class="stock-nums"><span class="stock-remain" id="stock-remain-2">1200</span><span class="stock-total" id="stock-total-2">/ 1200개</span></div>
+        <div class="stock-bar-wrap"><div class="stock-bar" id="stock-bar-2" style="width:100%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="adm-section">
+    <div class="adm-section-title">🎁 당첨 내용 · 수량 · 이미지 설정</div>
+    <div class="prize-setting-row">
+      <div class="prize-badge b1"><div class="prize-badge-icon">🎟️</div><div class="prize-badge-text">영화<br>티켓</div></div>
+      <div class="ps-info">
+        <input type="text" class="ps-name-input" id="name1" value="영화 티켓 1매" oninput="onSettingChange()" />
+        <div class="ps-numbers">
+          <div class="ps-num-group"><label>총 수량</label><input type="number" class="ps-num-input" id="qty1" value="20" min="0" oninput="onSettingChange()" /><span class="ps-unit">매</span></div>
+          <div class="ps-num-group"><label>당첨 확률</label><input type="number" class="ps-num-input" id="prob1" value="1.6" min="0" max="100" step="0.1" oninput="onSettingChange()" /><span class="ps-unit">%</span></div>
+        </div>
+        <div class="ps-img-input-wrap">
+          <label>📷 이미지 파일명</label>
+          <input type="text" class="ps-img-input" id="img1" value="images/당첨내용-02.png" placeholder="예: images/ticket.png" />
+        </div>
+        <button class="btn-reset-stock" onclick="resetStock(1)">🔄 수량 재설정</button>
+      </div>
+    </div>
+    <div class="prize-setting-row">
+      <div class="prize-badge b2"><div class="prize-badge-icon">🧴</div><div class="prize-badge-text">SA<br>미니어처</div></div>
+      <div class="ps-info">
+        <input type="text" class="ps-name-input" id="name2" value="SA 미니어처 1종" oninput="onSettingChange()" />
+        <div class="ps-numbers">
+          <div class="ps-num-group"><label>총 수량</label><input type="number" class="ps-num-input" id="qty2" value="1200" min="0" oninput="onSettingChange()" /><span class="ps-unit">개</span></div>
+          <div class="ps-num-group"><label>당첨 확률</label><input type="number" class="ps-num-input" id="prob2" value="98.4" min="0" max="100" step="0.1" oninput="onSettingChange()" /><span class="ps-unit">%</span></div>
+        </div>
+        <div class="ps-img-input-wrap">
+          <label>📷 이미지 파일명</label>
+          <input type="text" class="ps-img-input" id="img2" value="images/당첨내용-03.png" placeholder="예: images/miniature.png" />
+        </div>
+        <button class="btn-reset-stock" onclick="resetStock(2)">🔄 수량 재설정</button>
+      </div>
+    </div>
+    <div class="prob-bar-section">
+      <div class="bar-row"><div class="bar-name" id="bar1-name">영화 티켓 1매</div><div class="bar-track"><div class="bar-fill c1" id="bar1" style="width:1.6%;"></div></div><div class="bar-pct" id="bar1-pct">1.6%</div></div>
+      <div class="bar-row"><div class="bar-name" id="bar2-name">SA 미니어처 1종</div><div class="bar-track"><div class="bar-fill c2" id="bar2" style="width:98.4%;"></div></div><div class="bar-pct" id="bar2-pct">98.4%</div></div>
+    </div>
+    <div class="prob-total-row"><span>확률 합계</span><span class="prob-total-val ok" id="prob-sum">100%</span></div>
+    <div class="prob-warn" id="prob-warn"></div>
+  </div>
+
+  <div class="adm-section">
+    <div class="adm-section-title">
+      <span>📋 당첨 내역</span>
+      <button onclick="clearHistory()" style="font-size:11px;color:#888;background:none;border:none;cursor:pointer;text-decoration:underline;font-family:var(--font-body);">내역 초기화</button>
+    </div>
+    <div class="history-list" id="history-list"><div class="history-empty">아직 참여 내역이 없습니다.</div></div>
+  </div>
+
+  <button class="btn-save" onclick="saveSettings()">설정 저장</button>
+  <div class="save-feedback" id="save-feedback"></div>
+  <button class="btn-reset-all" onclick="resetAll()">전체 초기화 (통계 + 재고 + 내역)</button>
+</div>
+
+<div class="confetti-container" id="confetti"></div>
+
+<script>
+const DEF = { name1:'영화 티켓 1매', qty1:20, prob1:1.6, img1:'images/당첨내용-02.png', name2:'SA 미니어처 1종', qty2:1200, prob2:98.4, img2:'images/당첨내용-03.png' };
+let cfg={...DEF}, stat={total:0,p1:0,p2:0}, stock={remain1:DEF.qty1,remain2:DEF.qty2}, hist=[];
+
+function loadData(){
+  try{const c=localStorage.getItem('cf_cfg');  if(c)cfg=JSON.parse(c);}catch(e){}
+  try{const s=localStorage.getItem('cf_stat'); if(s)stat=JSON.parse(s);}catch(e){}
+  try{const k=localStorage.getItem('cf_stock');if(k)stock=JSON.parse(k);}catch(e){}
+  try{const h=localStorage.getItem('cf_hist'); if(h)hist=JSON.parse(h);}catch(e){}
+}
+function saveData(){
+  try{
+    localStorage.setItem('cf_cfg',  JSON.stringify(cfg));
+    localStorage.setItem('cf_stat', JSON.stringify(stat));
+    localStorage.setItem('cf_stock',JSON.stringify(stock));
+    localStorage.setItem('cf_hist', JSON.stringify(hist));
+  }catch(e){alert('저장 오류: '+e.message);}
+}
+loadData();
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if(name==='main') setTimeout(initScratch,60);
+  if(name==='admin'){ syncAdminForm();refreshStats();refreshStock();renderHistory();onSettingChange(); }
+}
+
+function pickPrize(){
+  const a1=stock.remain1>0, a2=stock.remain2>0;
+  if(!a1&&!a2) return 0;
+  if(!a1) return 2;
+  if(!a2) return 1;
+  const t=cfg.prob1+cfg.prob2;
+  if(t===0) return 2;
+  return Math.random()*t<cfg.prob1?1:2;
+}
+
+const CW=560, CH=200;
+let currentPrize=0;
+
+function initScratch(){
+  document.getElementById('retry-wrap').style.display='none';
+  document.getElementById('sold-out-overlay').className='';
+  if(stock.remain1<=0&&stock.remain2<=0){
+    document.getElementById('sold-out-overlay').className='show';
+    const cv=document.getElementById('scratch-canvas');
+    if(cv)cv.style.display='none';
+    return;
+  }
+  const cvOld=document.getElementById('scratch-canvas');
+  if(cvOld)cvOld.style.display='block';
+  currentPrize=pickPrize();
+
+  const imgEl=document.getElementById('prize-img');
+  const phEl=document.getElementById('prize-placeholder');
+  imgEl.style.display='block'; phEl.style.display='none';
+  imgEl.src=currentPrize===1?cfg.img1:cfg.img2;
+  imgEl.onerror=function(){this.style.display='none';phEl.style.display='flex';};
+  document.getElementById('prize-name-display').textContent=currentPrize===1?cfg.name1:cfg.name2;
+
+  const old=document.getElementById('scratch-canvas');
+  const nc=old.cloneNode(false);
+  old.parentNode.replaceChild(nc,old);
+  nc.id='scratch-canvas';nc.width=CW;nc.height=CH;nc.style.width='100%';nc.style.height='auto';
+  const ctx=nc.getContext('2d');
+
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle='#111111';
+  ctx.font='bold 32px Paperlogy, NotoSansKR, "Noto Sans KR", sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('Scratch Here!',CW/2,CH/2-12);
+  ctx.font='16px Paperlogy, NotoSansKR, "Noto Sans KR", sans-serif';
+  ctx.fillStyle='rgba(0,0,0,0.22)';
+  ctx.fillText('✦  ✦  ✦',CW/2,CH/2+26);
+
+  let drawing=false,done=false;
+  function getPos(e){
+    const r=nc.getBoundingClientRect();
+    const sx=nc.width/r.width,sy=nc.height/r.height;
+    const src=e.touches?e.touches[0]:e;
+    return[(src.clientX-r.left)*sx,(src.clientY-r.top)*sy];
+  }
+  function scratchAt(x,y){
+    if(done)return;
+    ctx.globalCompositeOperation='destination-out';
+    ctx.beginPath();ctx.arc(x,y,34,0,Math.PI*2);ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+    const d=ctx.getImageData(0,0,CW,CH).data;
+    let t=0;for(let i=3;i<d.length;i+=4){if(d[i]<100)t++;}
+    if(t/(CW*CH)>0.45){done=true;ctx.clearRect(0,0,CW,CH);onRevealed();}
+  }
+  nc.addEventListener('mousedown', e=>{drawing=true;scratchAt(...getPos(e));});
+  nc.addEventListener('mousemove', e=>{if(drawing)scratchAt(...getPos(e));});
+  nc.addEventListener('mouseup',   ()=>drawing=false);
+  nc.addEventListener('mouseleave',()=>drawing=false);
+  nc.addEventListener('touchstart',e=>{e.preventDefault();drawing=true;scratchAt(...getPos(e));},{passive:false});
+  nc.addEventListener('touchmove', e=>{e.preventDefault();if(drawing)scratchAt(...getPos(e));},{passive:false});
+  nc.addEventListener('touchend',  ()=>drawing=false);
+}
+
+function onRevealed(){
+  if(currentPrize===1){stock.remain1=Math.max(0,stock.remain1-1);stat.p1++;}
+  else{stock.remain2=Math.max(0,stock.remain2-1);stat.p2++;}
+  stat.total++;
+  const now=new Date();
+  const ts=[now.getHours(),now.getMinutes(),now.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+  hist.unshift({prize:currentPrize,name:currentPrize===1?cfg.name1:cfg.name2,time:ts});
+  if(hist.length>500)hist=hist.slice(0,500);
+  saveData();
+  document.getElementById('retry-wrap').style.display='block';
+  launchConfetti();
+}
+
+function resetToMain(){
+  document.getElementById('retry-wrap').style.display='none';
+  setTimeout(initScratch,60);
+}
+
+function launchConfetti(){
+  const w=document.getElementById('confetti');
+  w.style.display='block';w.innerHTML='';
+  const cols=['#FFD700','#1e9fd4','#ff6b6b','#4ecb71','#a78bfa','#fb923c'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');p.className='cp';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=cols[i%cols.length];
+    p.style.width=(7+Math.random()*9)+'px';
+    p.style.height=(7+Math.random()*9)+'px';
+    p.style.animationDuration=(1.2+Math.random()*2)+'s';
+    p.style.animationDelay=(Math.random()*.9)+'s';
+    w.appendChild(p);
+  }
+  setTimeout(()=>w.style.display='none',4000);
+}
+
+function syncAdminForm(){
+  document.getElementById('name1').value=cfg.name1; document.getElementById('name2').value=cfg.name2;
+  document.getElementById('qty1').value=cfg.qty1;   document.getElementById('qty2').value=cfg.qty2;
+  document.getElementById('prob1').value=cfg.prob1; document.getElementById('prob2').value=cfg.prob2;
+  document.getElementById('img1').value=cfg.img1||''; document.getElementById('img2').value=cfg.img2||'';
+}
+function refreshStats(){
+  document.getElementById('s-total').textContent=stat.total;
+  document.getElementById('s-p1').textContent=stat.p1;
+  document.getElementById('s-p2').textContent=stat.p2;
+}
+function refreshStock(){
+  const r1=stock.remain1,r2=stock.remain2,q1=cfg.qty1||1,q2=cfg.qty2||1;
+  document.getElementById('stock-remain-1').textContent=r1;
+  document.getElementById('stock-total-1').textContent='/ '+q1+'매';
+  document.getElementById('stock-name-1').textContent=cfg.name1;
+  document.getElementById('stock-bar-1').style.width=Math.round(r1/q1*100)+'%';
+  const c1=document.getElementById('stock-card-1'),b1=document.getElementById('stock-badge-1');
+  if(r1<=0){c1.className='stock-card s1 empty';b1.textContent='소진';b1.className='stock-badge empty';}
+  else{c1.className='stock-card s1';b1.textContent='운영중';b1.className='stock-badge active';}
+  document.getElementById('stock-remain-2').textContent=r2;
+  document.getElementById('stock-total-2').textContent='/ '+q2+'개';
+  document.getElementById('stock-name-2').textContent=cfg.name2;
+  document.getElementById('stock-bar-2').style.width=Math.round(r2/q2*100)+'%';
+  const c2=document.getElementById('stock-card-2'),b2=document.getElementById('stock-badge-2');
+  if(r2<=0){c2.className='stock-card s2 empty';b2.textContent='소진';b2.className='stock-badge empty';}
+  else{c2.className='stock-card s2';b2.textContent='운영중';b2.className='stock-badge active';}
+}
+function resetStock(n){
+  if(n===1)stock.remain1=cfg.qty1;else stock.remain2=cfg.qty2;
+  saveData();refreshStock();
+}
+function renderHistory(){
+  const el=document.getElementById('history-list');
+  if(!hist.length){el.innerHTML='<div class="history-empty">아직 참여 내역이 없습니다.</div>';return;}
+  el.innerHTML=hist.map((h,i)=>`
+    <div class="history-item">
+      <span class="history-num">${hist.length-i}</span>
+      <span class="history-dot p${h.prize}"></span>
+      <span class="history-prize p${h.prize}">${h.name}</span>
+      <span class="history-time">${h.time}</span>
+    </div>`).join('');
+}
+function onSettingChange(){
+  const p1=parseFloat(document.getElementById('prob1').value)||0;
+  const p2=parseFloat(document.getElementById('prob2').value)||0;
+  const n1=document.getElementById('name1').value||'상품1';
+  const n2=document.getElementById('name2').value||'상품2';
+  const tot=Math.round((p1+p2)*10)/10;
+  document.getElementById('bar1').style.width=Math.min(100,p1)+'%';
+  document.getElementById('bar2').style.width=Math.min(100,p2)+'%';
+  document.getElementById('bar1-pct').textContent=p1+'%';
+  document.getElementById('bar2-pct').textContent=p2+'%';
+  document.getElementById('bar1-name').textContent=n1;
+  document.getElementById('bar2-name').textContent=n2;
+  const sv=document.getElementById('prob-sum');
+  sv.textContent=tot+'%';
+  sv.className='prob-total-val '+(tot>100?'over':tot===100?'ok':'under');
+  const wn=document.getElementById('prob-warn');
+  if(tot>100){wn.textContent='⚠️ 합계가 100%를 초과합니다.';wn.className='prob-warn show over';}
+  else if(tot<100){wn.textContent='ℹ️ 합계 '+tot+'% — 나머지 '+Math.round((100-tot)*10)/10+'%는 당첨 없음 처리됩니다.';wn.className='prob-warn show under';}
+  else{wn.textContent='✅ 합계 100% — 정상입니다.';wn.className='prob-warn show ok';}
+}
+function saveSettings(){
+  const p1=parseFloat(document.getElementById('prob1').value)||0;
+  const p2=parseFloat(document.getElementById('prob2').value)||0;
+  const fb=document.getElementById('save-feedback');
+  if(Math.round((p1+p2)*10)/10>100){
+    fb.textContent='❌ 확률 합계가 100%를 초과합니다.';fb.className='save-feedback err';
+    setTimeout(()=>fb.textContent='',3000);return;
+  }
+  cfg.name1=document.getElementById('name1').value||cfg.name1;
+  cfg.name2=document.getElementById('name2').value||cfg.name2;
+  cfg.qty1=parseInt(document.getElementById('qty1').value)||0;
+  cfg.qty2=parseInt(document.getElementById('qty2').value)||0;
+  cfg.prob1=p1;cfg.prob2=p2;
+  cfg.img1=document.getElementById('img1').value||cfg.img1;
+  cfg.img2=document.getElementById('img2').value||cfg.img2;
+  saveData();refreshStock();
+  fb.textContent='✅ 저장되었습니다!';fb.className='save-feedback ok';
+  setTimeout(()=>fb.textContent='',3000);
+}
+function clearHistory(){
+  if(!confirm('당첨 내역을 초기화할까요?'))return;
+  hist=[];saveData();renderHistory();
+}
+function resetAll(){
+  if(!confirm('통계, 재고, 내역을 모두 초기화할까요?'))return;
+  stat={total:0,p1:0,p2:0};
+  stock={remain1:cfg.qty1,remain2:cfg.qty2};
+  hist=[];saveData();refreshStats();refreshStock();renderHistory();
+}
+
+window.addEventListener('load', initScratch);
+</script>
+</body>
+</html>
